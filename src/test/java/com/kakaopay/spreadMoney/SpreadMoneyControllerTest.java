@@ -71,6 +71,7 @@ public class SpreadMoneyControllerTest {
 								.andReturn();
 	}
 	
+	
 	@DisplayName("받기 : 뿌린 사람 아닌 경우")
 	@Test
 	@Order(3)
@@ -83,6 +84,21 @@ public class SpreadMoneyControllerTest {
 		MvcResult result = mockMvc.perform(builder)
 								.andDo(print())
 								.andExpect(status().isOk())
+								.andReturn();
+	}
+	
+	@DisplayName("받기 : 뿌린 사람 아닌 경우 & 이미 받은 경우")
+	@Test
+	@Order(3)
+	void testgetMoney3() throws Exception {
+		MockHttpServletRequestBuilder builder = put("/rest/v1.0/spread/" + test_token)
+													.header("x-room-id", ROOM_ID)
+													.header("x-user-id", "3456");
+		
+		
+		MvcResult result = mockMvc.perform(builder)
+								.andDo(print())
+								.andExpect(status().isExpectationFailed())
 								.andReturn();
 	}
 	
