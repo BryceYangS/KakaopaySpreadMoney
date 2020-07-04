@@ -6,6 +6,10 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Service;
 
 import com.kakaopay.spreadMoney.domain.entity.SpreadDetailInfo;
@@ -15,6 +19,7 @@ import com.kakaopay.spreadMoney.exception.BusinessException;
 import com.kakaopay.spreadMoney.service.SpreadMoneyService;
 import com.kakaopay.spreadMoney.util.DateUtil;
 import com.kakaopay.spreadMoney.util.MoneyUtil;
+import com.mongodb.client.result.UpdateResult;
 
 @Service("spreadMoneyService")
 public class SpreadMoneyServiceImpl implements SpreadMoneyService {
@@ -23,6 +28,9 @@ public class SpreadMoneyServiceImpl implements SpreadMoneyService {
 	
 	@Autowired
 	private SpreadMoneyRepository spreadRepostory;
+	
+	@Autowired
+	private MongoTemplate mongoTemplate;
 	
 	@Override
 	public String insertSpreadInfo(SpreadInfo spread) throws Exception {
@@ -68,14 +76,34 @@ public class SpreadMoneyServiceImpl implements SpreadMoneyService {
 			throw new BusinessException("10분이 지난 뿌리기입니다.");
 		
 		// 뿌린 돈 받기
-		for (SpreadDetailInfo spreadDetailInfo : spreadDetailList) {
-			if(spreadDetailInfo.getGetterId().equals("none")) {
-				spreadDetailInfo.setGetterId(Integer.toString(userId));
+		Query query = new Query();
+		query.addCriteria(Criteria.where("roomId").is(spreadInfo.getRoomId()).and("token").is(spreadInfo.getToken()).and("spreadDetailInfo.getterId").is("none"));
+		
+		Update update = new Update().set("spreadDetailInfo.$.getterId", Integer.toString(userId));
+		
+		UpdateResult result = mongoTemplate.updateFirst(query, update, SpreadInfo.class);
+		
+		if(result.getModifiedCount() == 0) 
+			throw new BusinessException("이미 다 뿌려진 돈입니다.");
+		
+		
+		spreadInfo = spreadRepostory.findByTokenAndRoomId(spread.getRoomId(), spread.getToken());
+		
+		for (SpreadDetailInfo spreadDetailInfo : spreadInfo.getSpreadDetailInfo()) {
+			if(spreadDetailInfo.getGetterId().equals(Integer.toString(userId))) {
 				rtnMoney = spreadDetailInfo.getSpreadMoney();
 				break;
 			}
 		}
-		spreadRepostory.save(spreadInfo);
+		
+//		for (SpreadDetailInfo spreadDetailInfo : spreadDetailList) {
+//			if(spreadDetailInfo.getGetterId().equals("none")) {
+//				spreadDetailInfo.setGetterId(Integer.toString(userId));
+//				rtnMoney = spreadDetailInfo.getSpreadMoney();
+//				break;
+//			}
+//		}
+//		spreadRepostory.save(spreadInfo);
 		
 		return rtnMoney;
 	}
