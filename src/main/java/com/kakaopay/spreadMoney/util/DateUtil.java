@@ -1,44 +1,32 @@
 package com.kakaopay.spreadMoney.util;
 
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
+import java.time.Duration;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.Period;
 
 public class DateUtil {
 
-	public static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("YYYY-MM-dd HH:mm:ss");
-
-	public static String getNow() {
-		Date now = new Date();
-		return DATE_FORMAT.format(now);
-	}
-	
-	
-	public static boolean isAfterMinute(String stTime, int minute) throws Exception{
-		Date now = new Date();
-		Date stTimeDate;
-		stTimeDate = DATE_FORMAT.parse(stTime);
-		Calendar cal = Calendar.getInstance();
-		cal.setTime(stTimeDate);
-		cal.add(Calendar.MINUTE, minute);
+	public static boolean isAfterMinute(LocalDateTime stTime, int minute) throws Exception{
 		
-		if(cal.getTime().after(now)) {
-			return true;
-		}
+		LocalDateTime now = LocalDateTime.now();
+		
+		Duration du = Duration.between(stTime, now);
+		
+		int betweenMin = (int) (du.getSeconds() / 60);
+		if(betweenMin >= minute) return true;
+		
 		return false;
 	}
 	
-	public static boolean isAfterDay(String stTime, int day) throws 	Exception{
-		Date now = new Date();
-		Date stTimeDate;
-		stTimeDate = DATE_FORMAT.parse(stTime);
-		Calendar cal = Calendar.getInstance();
-		cal.setTime(stTimeDate);
-		cal.add(Calendar.DATE, day);
+	public static boolean isAfterDay(LocalDateTime stTime, int day) throws 	Exception{
 		
-		if(cal.getTime().after(now)) {
-			return true;
-		}
+		LocalDate now = LocalDate.now();
+		
+		Period pe = Period.between(stTime.toLocalDate(), now);
+		
+		if(pe.getDays() > day) return true;
+		
 		return false;
 	}
 }

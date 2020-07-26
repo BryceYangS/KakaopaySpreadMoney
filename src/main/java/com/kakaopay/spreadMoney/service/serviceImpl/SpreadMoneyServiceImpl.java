@@ -1,5 +1,6 @@
 package com.kakaopay.spreadMoney.service.serviceImpl;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.apache.commons.lang3.RandomStringUtils;
@@ -44,7 +45,7 @@ public class SpreadMoneyServiceImpl implements SpreadMoneyService {
 		List<SpreadDetailInfo> spreadDetailInfo = MoneyUtil.makeSpreadDeatilInfo(spread.getTotalMoney(),
 				spread.getGetterNum());
 		spread.setSpreadDetailInfo(spreadDetailInfo);
-		spread.setSpreadStTime(DateUtil.getNow());
+		spread.setSpreadStTime(LocalDateTime.now());
 		
 		spreadRepostory.save(spread);
 		return token;

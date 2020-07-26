@@ -1,5 +1,6 @@
 package com.kakaopay.spreadMoney.domain.entity;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.data.annotation.Id;
@@ -23,13 +24,14 @@ public class SpreadInfo {
 	private String roomId;
 	
 	private int spreadId;
-	private String spreadStTime;
+//	private String spreadStTime;
+	private LocalDateTime spreadStTime;
 	private int totalMoney;
 	private int getterNum;
 	private List<SpreadDetailInfo> spreadDetailInfo;
 	
 	@Builder
-	public SpreadInfo(String token, int spreadId, String roomId, String spreadStTime, int totalMoney, int getterNum, List<SpreadDetailInfo> spreadDetailInfo) {
+	public SpreadInfo(String token, int spreadId, String roomId, LocalDateTime spreadStTime, int totalMoney, int getterNum, List<SpreadDetailInfo> spreadDetailInfo) {
 		this.token = token;
 		this.spreadId = spreadId;
 		this.roomId = roomId;
