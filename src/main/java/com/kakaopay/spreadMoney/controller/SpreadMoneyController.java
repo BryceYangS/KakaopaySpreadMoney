@@ -47,7 +47,7 @@ public class SpreadMoneyController {
     @PutMapping("/rest/v1.0/spread/{token}")
     public ResponseEntity<Object> getMoney(@RequestHeader(name = "x-room-id") String roomId, @RequestHeader(name = "x-user-id") int userId, @PathVariable(name = "token") String token) throws Exception{
 		Map<String, Integer> result = new HashMap<String, Integer>();
-		result.put("money", spreadMoneyService.getMoney(token,userId,roomId));
+		result.put("money", spreadMoneyService.receiveMoney(token,userId,roomId));
         return new ResponseEntity<>(result, HttpStatus.OK);
     }
 	

@@ -1,3 +1,5 @@
+.metadata/
+
 HELP.md
 .gradle
 build/

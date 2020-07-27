@@ -52,7 +52,7 @@ public class SpreadMoneyServiceImpl implements SpreadMoneyService {
 	}
 
 	@Override
-	public int getMoney(String token, int userId, String roomId) throws Exception {
+	public int receiveMoney(String token, int userId, String roomId) throws Exception {
 		SpreadInfo spread = SpreadInfo.builder()
 								.token(token)
 								.roomId(roomId)
@@ -70,7 +70,7 @@ public class SpreadMoneyServiceImpl implements SpreadMoneyService {
 		if(userId == spreadInfo.getSpreadId()) 
 			throw new BusinessException("자신이 뿌리기한 건은 자신이 받을 수 없습니다.");
 		
-		if(isGetMoney(userId, spreadDetailList))
+		if(isReceiveMoney(userId, spreadDetailList))
 			throw new BusinessException("뿌리기 당 한 사용자는 한 번만 받을 수 있습니다.");
 		
 		if(DateUtil.isAfterMinute(spreadInfo.getSpreadStTime(), 10))
@@ -96,15 +96,6 @@ public class SpreadMoneyServiceImpl implements SpreadMoneyService {
 				break;
 			}
 		}
-		
-//		for (SpreadDetailInfo spreadDetailInfo : spreadDetailList) {
-//			if(spreadDetailInfo.getGetterId().equals("none")) {
-//				spreadDetailInfo.setGetterId(Integer.toString(userId));
-//				rtnMoney = spreadDetailInfo.getSpreadMoney();
-//				break;
-//			}
-//		}
-//		spreadRepostory.save(spreadInfo);
 		
 		return rtnMoney;
 	}
@@ -140,7 +131,7 @@ public class SpreadMoneyServiceImpl implements SpreadMoneyService {
 	}
 
 	@Override
-	public boolean isGetMoney(int userId, List<SpreadDetailInfo> spreadDetailList) throws Exception {
+	public boolean isReceiveMoney(int userId, List<SpreadDetailInfo> spreadDetailList) throws Exception {
 		for (SpreadDetailInfo spreadDetailInfo : spreadDetailList) {
 			if(spreadDetailInfo.getGetterId().equals(Integer.toString(userId))) {
 				return true;
