@@ -2,13 +2,13 @@ package com.kakaopay.spreadMoney.service;
 
 import java.util.List;
 
-import com.kakaopay.spreadMoney.domain.entity.SpreadDetailInfo;
-import com.kakaopay.spreadMoney.domain.entity.SpreadInfo;
+import com.kakaopay.spreadMoney.domain.entity.Spread;
+import com.kakaopay.spreadMoney.domain.entity.SpreadDetail;
 
 public interface SpreadMoneyService {
-	boolean existToken(SpreadInfo spread) throws Exception;
-	String insertSpreadInfo(SpreadInfo spread) throws Exception;
+	boolean existToken(Spread spread) throws Exception;
+	String insertSpread(Spread spread) throws Exception;
 	int receiveMoney(String token, int userId, String roomId) throws Exception;
-	boolean isReceiveMoney(int userId, List<SpreadDetailInfo> spreadDetailList) throws Exception;
-	SpreadInfo retrieveSpreadInfo(String token, int userId, String roomId) throws Exception;
+	boolean isReceiveMoney(int userId, List<SpreadDetail> spreadDetailList) throws Exception;
+	Spread retrieveSpread(String token, int userId, String roomId) throws Exception;
 }

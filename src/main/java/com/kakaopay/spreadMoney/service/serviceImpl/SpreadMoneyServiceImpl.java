@@ -13,8 +13,8 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Service;
 
-import com.kakaopay.spreadMoney.domain.entity.SpreadDetailInfo;
-import com.kakaopay.spreadMoney.domain.entity.SpreadInfo;
+import com.kakaopay.spreadMoney.domain.entity.Spread;
+import com.kakaopay.spreadMoney.domain.entity.SpreadDetail;
 import com.kakaopay.spreadMoney.domain.repository.SpreadMoneyRepository;
 import com.kakaopay.spreadMoney.exception.BusinessException;
 import com.kakaopay.spreadMoney.service.SpreadMoneyService;
@@ -34,7 +34,7 @@ public class SpreadMoneyServiceImpl implements SpreadMoneyService {
 	private MongoTemplate mongoTemplate;
 	
 	@Override
-	public String insertSpreadInfo(SpreadInfo spread) throws Exception {
+	public String insertSpread(Spread spread) throws Exception {
 		
 		String token = "";
 		do {
@@ -42,10 +42,9 @@ public class SpreadMoneyServiceImpl implements SpreadMoneyService {
 			spread.setToken(token);
 		}while(existToken(spread));
 		
-		List<SpreadDetailInfo> spreadDetailInfo = MoneyUtil.makeSpreadDeatilInfo(spread.getTotalMoney(),
-				spread.getGetterNum());
-		spread.setSpreadDetailInfo(spreadDetailInfo);
-		spread.setSpreadStTime(LocalDateTime.now());
+		List<SpreadDetail> spreadDetailList = MoneyUtil.makeSpreadDeatilList(spread.getTotalMoney(), spread.getReceiverTotalNumber());
+		spread.setSpreadDetailList(spreadDetailList);
+		spread.setGenerationTimestamp(LocalDateTime.now());
 		
 		spreadRepostory.save(spread);
 		return token;
@@ -53,45 +52,45 @@ public class SpreadMoneyServiceImpl implements SpreadMoneyService {
 
 	@Override
 	public int receiveMoney(String token, int userId, String roomId) throws Exception {
-		SpreadInfo spread = SpreadInfo.builder()
+		Spread tmpSpread = Spread.builder()
 								.token(token)
 								.roomId(roomId)
 								.build();
 		
-		SpreadInfo spreadInfo = spreadRepostory.findByTokenAndRoomId(spread.getRoomId(), spread.getToken());
+		Spread spread = spreadRepostory.findByTokenAndRoomId(tmpSpread.getRoomId(), tmpSpread.getToken());
 		
-		if(spreadInfo == null)
+		if(spread == null)
 			throw new BusinessException("다른 방에 속한 사용자는 받을 수 없습니다.");
 		
 		
-		List<SpreadDetailInfo> spreadDetailList = spreadInfo.getSpreadDetailInfo();
+		List<SpreadDetail> spreadDetailList = spread.getSpreadDetailList();
 		int rtnMoney = 0;
 		
-		if(userId == spreadInfo.getSpreadId()) 
+		if(userId == spread.getSpreaderId()) 
 			throw new BusinessException("자신이 뿌리기한 건은 자신이 받을 수 없습니다.");
 		
 		if(isReceiveMoney(userId, spreadDetailList))
 			throw new BusinessException("뿌리기 당 한 사용자는 한 번만 받을 수 있습니다.");
 		
-		if(DateUtil.isAfterMinute(spreadInfo.getSpreadStTime(), 10))
+		if(DateUtil.isAfterMinute(spread.getGenerationTimestamp(), 10))
 			throw new BusinessException("10분이 지난 뿌리기입니다.");
 		
 		// 뿌린 돈 받기
 		Query query = new Query();
-		query.addCriteria(Criteria.where("roomId").is(spreadInfo.getRoomId()).and("token").is(spreadInfo.getToken()).and("spreadDetailInfo.getterId").is("none"));
+		query.addCriteria(Criteria.where("roomId").is(spread.getRoomId()).and("token").is(spread.getToken()).and("spreadDetailList.receiverId").is("none"));
 		
-		Update update = new Update().set("spreadDetailInfo.$.getterId", Integer.toString(userId));
+		Update update = new Update().set("spreadDetailList.$.receiverId", Integer.toString(userId));
 		
-		UpdateResult result = mongoTemplate.updateFirst(query, update, SpreadInfo.class);
+		UpdateResult result = mongoTemplate.updateFirst(query, update, Spread.class);
 		
 		if(result.getModifiedCount() == 0) 
 			throw new BusinessException("이미 다 뿌려진 돈입니다.");
 		
 		
-		spreadInfo = spreadRepostory.findByTokenAndRoomId(spread.getRoomId(), spread.getToken());
+		spread = spreadRepostory.findByTokenAndRoomId(spread.getRoomId(), spread.getToken());
 		
-		for (SpreadDetailInfo spreadDetailInfo : spreadInfo.getSpreadDetailInfo()) {
-			if(spreadDetailInfo.getGetterId().equals(Integer.toString(userId))) {
+		for (SpreadDetail spreadDetailInfo : spread.getSpreadDetailList()) {
+			if(spreadDetailInfo.getReceiverId().equals(Integer.toString(userId))) {
 				rtnMoney = spreadDetailInfo.getSpreadMoney();
 				break;
 			}
@@ -102,28 +101,28 @@ public class SpreadMoneyServiceImpl implements SpreadMoneyService {
 	
 	
 	@Override
-	public SpreadInfo retrieveSpreadInfo(String token, int userId, String roomId) throws Exception {
-		SpreadInfo spread = SpreadInfo.builder()
+	public Spread retrieveSpread(String token, int userId, String roomId) throws Exception {
+		Spread tmpSpread = Spread.builder()
 				.token(token)
 				.roomId(roomId)
 				.build();
 		
-		SpreadInfo spreadInfo = spreadRepostory.findByTokenAndRoomId(spread.getRoomId(), spread.getToken());
+		Spread spread = spreadRepostory.findByTokenAndRoomId(tmpSpread.getRoomId(), tmpSpread.getToken());
 		
-		if(spreadInfo == null)
+		if(spread == null)
 			throw new BusinessException("유효하지 않은 방 ID 또는 토큰입니다.");
 		
-		if(spreadInfo.getSpreadId() != userId)
+		if(spread.getSpreaderId() != userId)
 			throw new BusinessException("뿌린 사람만 조회가 가능합니다.");
 		
-		if(DateUtil.isAfterDay(spreadInfo.getSpreadStTime(), 7))
+		if(DateUtil.isAfterDay(spread.getGenerationTimestamp(), 7))
 			throw new BusinessException("7일이 지난 뿌리기입니다.");
 		
-		return spreadInfo;
+		return spread;
 	}
 	
 	@Override
-	public boolean existToken(SpreadInfo spread) throws Exception {
+	public boolean existToken(Spread spread) throws Exception {
 		if (spreadRepostory.findByTokenAndRoomId(spread.getRoomId(), spread.getToken()) != null) {
 			return true;
 		}
@@ -131,9 +130,9 @@ public class SpreadMoneyServiceImpl implements SpreadMoneyService {
 	}
 
 	@Override
-	public boolean isReceiveMoney(int userId, List<SpreadDetailInfo> spreadDetailList) throws Exception {
-		for (SpreadDetailInfo spreadDetailInfo : spreadDetailList) {
-			if(spreadDetailInfo.getGetterId().equals(Integer.toString(userId))) {
+	public boolean isReceiveMoney(int userId, List<SpreadDetail> spreadDetailList) throws Exception {
+		for (SpreadDetail spreadDetail : spreadDetailList) {
+			if(spreadDetail.getReceiverId().equals(Integer.toString(userId))) {
 				return true;
 			}
 		}

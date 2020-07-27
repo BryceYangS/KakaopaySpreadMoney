@@ -9,12 +9,15 @@ import org.springframework.data.mongodb.core.mapping.Document;
 
 import lombok.Builder;
 import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @NoArgsConstructor
-@Data
+@Getter
+@Setter
 @Document(collection="spread")
-public class SpreadInfo {
+public class Spread {
 	@Id
 	private String _id;
 	
@@ -23,21 +26,20 @@ public class SpreadInfo {
 	@Indexed
 	private String roomId;
 	
-	private int spreadId;
-//	private String spreadStTime;
-	private LocalDateTime spreadStTime;
+	private int spreaderId;
+	private LocalDateTime generationTimestamp;
 	private int totalMoney;
-	private int getterNum;
-	private List<SpreadDetailInfo> spreadDetailInfo;
+	private int receiverTotalNumber;
+	private List<SpreadDetail> spreadDetailList;
 	
 	@Builder
-	public SpreadInfo(String token, int spreadId, String roomId, LocalDateTime spreadStTime, int totalMoney, int getterNum, List<SpreadDetailInfo> spreadDetailInfo) {
+	public Spread(String token, int spreaderId, String roomId, LocalDateTime generationTimestamp, int totalMoney, int receiverTotalNumber, List<SpreadDetail> spreadDetailList) {
 		this.token = token;
-		this.spreadId = spreadId;
+		this.spreaderId = spreaderId;
 		this.roomId = roomId;
-		this.spreadStTime = spreadStTime;
+		this.generationTimestamp = generationTimestamp;
 		this.totalMoney = totalMoney;
-		this.getterNum = getterNum;
-		this.spreadDetailInfo = spreadDetailInfo;
+		this.receiverTotalNumber = receiverTotalNumber;
+		this.spreadDetailList = spreadDetailList;
 	}
 }
